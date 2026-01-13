@@ -6,6 +6,7 @@ import { listCommitments, type Commitment } from "../lib/api";
 const items = ref<Commitment[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
+const consecutiveFailures = ref(0);
 const qrDataUrl = ref<string | null>(null);
 
 const formUrl = computed(() => {
@@ -17,10 +18,16 @@ let timer: number | null = null;
 
 async function refresh() {
   try {
+    const next = await listCommitments();
+    items.value = next;
+    consecutiveFailures.value = 0;
     error.value = null;
-    items.value = await listCommitments();
   } catch (e) {
-    error.value = e instanceof Error ? e.message : "Error";
+    consecutiveFailures.value += 1;
+    // Avoid flashing the banner on a single transient failure (Render cold starts / deploys).
+    if (consecutiveFailures.value >= 3) {
+      error.value = e instanceof Error ? e.message : "Error";
+    }
   } finally {
     loading.value = false;
   }
@@ -80,6 +87,12 @@ onBeforeUnmount(() => {
 
       <div v-if="error" class="mt-6 rounded-xl bg-red-500/10 px-4 py-3 text-sm text-red-200 ring-1 ring-red-500/20">
         {{ error }}
+      </div>
+      <div
+        v-else-if="consecutiveFailures > 0"
+        class="mt-6 rounded-xl bg-zinc-900/60 px-4 py-3 text-sm text-zinc-300 ring-1 ring-white/10"
+      >
+        Reconectando…
       </div>
 
       <div class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

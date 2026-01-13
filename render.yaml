@@ -8,8 +8,8 @@ services:
     env: node
     plan: free
     buildCommand: |
-      cd frontend && npm ci && npm run build
-      cd ../backend && npm ci && npm run prisma:generate && npm run build
+      cd frontend && npm ci --include=dev && npm run build
+      cd ../backend && npm ci --include=dev && npm run prisma:generate && npm run build
     startCommand: cd backend && npm run start:render
     healthCheckPath: /health
     envVars:

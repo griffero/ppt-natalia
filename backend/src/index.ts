@@ -78,8 +78,8 @@ const __dirname = path.dirname(__filename);
 const publicDir = path.resolve(__dirname, "../public");
 
 app.use(express.static(publicDir));
-// Express v5 (path-to-regexp v6) doesn't accept "*" as a path. Use "/*" instead.
-app.get("/*", (req, res, next) => {
+// SPA fallback without a path pattern (Express v5 path-to-regexp is strict about wildcards).
+app.use((req, res, next) => {
   if (req.path.startsWith("/api") || req.path === "/health") return next();
   return res.sendFile(path.join(publicDir, "index.html"));
 });
